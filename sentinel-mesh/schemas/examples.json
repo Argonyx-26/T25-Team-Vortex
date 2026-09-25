@@ -1,0 +1,58 @@
+{
+  "example_events": [
+    {
+      "event_id": "evt_00001",
+      "source": "network",
+      "event_type": "failed_login",
+      "entity": { "id": "employee_42", "type": "employee" },
+      "location": null,
+      "timestamp": "2026-09-26T02:10:05Z",
+      "severity": "low",
+      "flagged": true,
+      "rule_triggered": "brute_force_login",
+      "raw_details": { "attempt_count": 3, "ip": "10.0.0.5" }
+    },
+    {
+      "event_id": "evt_00002",
+      "source": "badge",
+      "event_type": "badge_scan",
+      "entity": { "id": "employee_42", "type": "employee" },
+      "location": "server_room",
+      "timestamp": "2026-09-26T02:14:00Z",
+      "severity": "medium",
+      "flagged": true,
+      "rule_triggered": "after_hours_badge_access",
+      "raw_details": { "door_id": "D-114", "access_granted": true }
+    },
+    {
+      "event_id": "evt_00003",
+      "source": "camera",
+      "event_type": "motion_detected",
+      "entity": { "id": "employee_42", "type": "employee" },
+      "location": "server_room",
+      "timestamp": "2026-09-26T02:15:30Z",
+      "severity": "medium",
+      "flagged": true,
+      "rule_triggered": "restricted_zone_motion",
+      "raw_details": { "camera_id": "CAM-09", "duration_seconds": 340 }
+    }
+  ],
+  "example_incident": {
+    "incident_id": "inc_00001",
+    "created_at": "2026-09-26T02:15:31Z",
+    "updated_at": "2026-09-26T02:16:00Z",
+    "linked_event_ids": ["evt_00001", "evt_00002", "evt_00003"],
+    "primary_entity": { "id": "employee_42", "type": "employee" },
+    "locations": ["server_room"],
+    "time_window": { "start": "2026-09-26T02:10:05Z", "end": "2026-09-26T02:15:30Z" },
+    "correlation_reason": "same_entity_and_location",
+    "severity": "high",
+    "matched_attack_pattern": "recon_then_brute_force",
+    "predicted_next_step": "Likely attempt to access or copy data from a server within the next 10 minutes",
+    "confidence": 0.82,
+    "summary": "Employee_42's credentials were used for repeated failed network logins at 2:10 AM, followed four minutes later by an after-hours badge scan into the server room and sustained motion in a restricted camera zone. This sequence matches a known pre-exfiltration pattern.",
+    "recommended_action": "Verify employee_42's identity immediately and consider temporarily suspending server room access pending confirmation.",
+    "status": "new",
+    "operator_feedback": null
+  }
+}

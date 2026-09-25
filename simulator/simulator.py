@@ -9,7 +9,7 @@ POSTs each event to the backend's /events endpoint as it's generated.
 """
 
 import time
-import uuid 
+import uuid
 import random
 import requests
 from datetime import datetime, timezone, timedelta
