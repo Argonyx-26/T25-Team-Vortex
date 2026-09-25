@@ -1,6 +1,6 @@
 import React from 'react';
-import LandingDashboard from './components/LandingDashboard';
+import ScrollStory from './components/ScrollStory';
 
 export default function App() {
-  return <LandingDashboard />;
+  return <ScrollStory />;
 }

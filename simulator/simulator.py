@@ -14,9 +14,10 @@ import random
 import requests
 from datetime import datetime, timezone, timedelta
 
+import os
 import rules
 
-BACKEND_URL = "http://localhost:8000/events"
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:5000/events")
 
 SOURCES = ["camera", "badge", "network"]
 LOCATIONS = ["lobby", "floor_2", "cafeteria", "server_room"]
