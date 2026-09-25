@@ -112,7 +112,7 @@ def run():
             for attack_event in make_attack_sequence():
                 attack_event = rules.evaluate(attack_event)
                 send_event(attack_event)     
-                time.sleep(1)
+                time.sleep(1)  
 
         time.sleep(1.5) 
 
