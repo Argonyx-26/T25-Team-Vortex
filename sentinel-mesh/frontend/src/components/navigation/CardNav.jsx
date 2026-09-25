@@ -1,0 +1,142 @@
+import React from 'react';
+import { Shield, Activity, Bell, FileText, Lock, RefreshCw, Radio } from 'lucide-react';
+
+/**
+ * CardNav
+ * High-tech card segmented navigation bar.
+ * Includes:
+ * - Online status indicator: Top-right in nav bar, small monospace text + single square/dot, driven by polling GET / every 5 seconds.
+ * - Tab cards with live metrics
+ * - Compliance modal triggers
+ */
+export default function CardNav({
+  activeTab,
+  setActiveTab,
+  onlineStatus,
+  latency,
+  eventCount,
+  incidentCount,
+  alertCount,
+  onOpenLegalModal,
+  onReset,
+  isResetting
+}) {
+  const navCards = [
+    { id: 'overview', label: '01 / OVERVIEW', badge: null },
+    { id: 'telemetry', label: '02 / TELEMETRY', badge: eventCount != null ? eventCount : null },
+    { id: 'fusion', label: '03 / CORRELATION', badge: '3-WAY' },
+    { id: 'incidents', label: '04 / INCIDENTS', badge: incidentCount != null ? incidentCount : null, alert: (incidentCount || 0) > 0 },
+    { id: 'notifications', label: '05 / NOTIFICATIONS', badge: alertCount != null ? alertCount : null, alert: (alertCount || 0) > 0 },
+    { id: 'cctv', label: '06 / CCTV OPTICAL', badge: 'LIVE' },
+  ];
+
+  const handleCardClick = (id) => {
+    setActiveTab(id);
+    const element = document.getElementById(`section-${id}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  return (
+    <header className="sticky top-0 z-50 bg-[#050811]/95 backdrop-blur-md border-b border-cyan-950/80 px-4 lg:px-8 py-3">
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Brand & Online Indicator */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 border border-cyan-400 bg-cyan-950/40 flex items-center justify-center text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)]">
+              <Shield className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-mono text-sm font-bold text-slate-100 tracking-wider">
+                SENTINEL<span className="text-cyan-400">MESH</span>
+              </div>
+              <div className="font-mono text-[9px] text-slate-500 tracking-widest uppercase">
+                Threat Correlation Engine
+              </div>
+            </div>
+          </div>
+
+          {/* Online Status Indicator (Required: top-right in nav bar, small monospace text + single square/dot) */}
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-black/60 border border-slate-800 font-mono text-xs">
+            <span
+              className={`w-2 h-2 ${
+                onlineStatus ? 'bg-emerald-400 shadow-[0_0_8px_#10b981]' : 'bg-rose-500 shadow-[0_0_8px_#ef4444]'
+              }`}
+            />
+            <span className={`text-[11px] font-semibold ${onlineStatus ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {onlineStatus ? 'ONLINE' : 'OFFLINE'}
+            </span>
+            {latency != null && (
+              <span className="text-[10px] text-slate-500 border-l border-slate-800 pl-2">
+                {latency}ms
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Card Segment Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+          {navCards.map((card) => {
+            const isActive = activeTab === card.id;
+            return (
+              <button
+                key={card.id}
+                onClick={() => handleCardClick(card.id)}
+                className={`flex items-center gap-2 px-3 py-1.5 font-mono text-xs transition-all whitespace-nowrap cursor-pointer border ${
+                  isActive
+                    ? 'border-cyan-400 bg-cyan-950/50 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.2)]'
+                    : 'border-slate-800/80 bg-[#070b14] text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                }`}
+              >
+                <span>{card.label}</span>
+                {card.badge != null && (
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 font-bold ${
+                      card.alert
+                        ? 'bg-rose-950 text-rose-300 border border-rose-800'
+                        : 'bg-slate-800 text-slate-300'
+                    }`}
+                  >
+                    {card.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Action Controls & Legal Modals */}
+        <div className="flex items-center gap-2 justify-end">
+          <button
+            onClick={() => onOpenLegalModal('terms')}
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-slate-400 hover:text-slate-200 border border-slate-800 bg-[#070b14] font-mono text-[11px] cursor-pointer"
+            title="Terms and Conditions"
+          >
+            <FileText className="w-3 h-3 text-cyan-400" />
+            <span>T&C</span>
+          </button>
+
+          <button
+            onClick={() => onOpenLegalModal('privacy')}
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-slate-400 hover:text-slate-200 border border-slate-800 bg-[#070b14] font-mono text-[11px] cursor-pointer"
+            title="Privacy Policy"
+          >
+            <Lock className="w-3 h-3 text-emerald-400" />
+            <span>PRIVACY</span>
+          </button>
+
+          <button
+            onClick={onReset}
+            disabled={isResetting}
+            className="flex items-center gap-1 px-2.5 py-1 text-amber-300 border border-amber-800/60 bg-amber-950/30 hover:bg-amber-950/60 font-mono text-[11px] transition-colors cursor-pointer"
+            title="Reset Pipeline State"
+          >
+            <RefreshCw className={`w-3 h-3 ${isResetting ? 'animate-spin' : ''}`} />
+            <span>RESET</span>
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
