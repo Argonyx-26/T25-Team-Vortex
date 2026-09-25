@@ -8,7 +8,7 @@ Returns the same event dict with 'flagged' and 'rule_triggered' filled in.
 
 from datetime import datetime
 
-RESTRICTED_ZONES = {"server_room"}
+RESTRICTED_ZONES = {"server_room"} 
 
 
 def after_hours_badge_access(event: dict) -> bool:
