@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sentinelmesh.local/schemas/event.schema.json",
+  "title": "SentinelMesh Raw Event",
+  "description": "One flagged or unflagged event emitted by the Event Simulator / Rule-Based Detector, from any of the three data streams (camera, badge, network).",
+  "type": "object",
+  "required": ["event_id", "source", "event_type", "entity", "timestamp", "severity", "flagged"],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Globally unique ID for this event.",
+      "pattern": "^evt_[a-zA-Z0-9]+$",
+      "examples": ["evt_00001", "evt_a3f9c1"]
+    },
+    "source": {
+      "type": "string",
+      "description": "Which data stream this event came from.",
+      "enum": ["camera", "badge", "network"]
+    },
+    "event_type": {
+      "type": "string",
+      "description": "Specific kind of event. Not a strict enum because each source has its own vocabulary — keep values consistent within your team (see examples).",
+      "examples": ["motion_detected", "unauthorized_zone_entry", "badge_scan", "badge_denied", "failed_login", "port_scan", "data_transfer_spike", "impossible_travel"]
+    },
+    "entity": {
+      "type": "object",
+      "description": "The person, device, or account this event is attributed to. This is the field the Fusion Engine correlates on.",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Identifier for the entity — employee ID, IP address, device ID, or 'unknown'.",
+          "examples": ["employee_42", "10.0.0.5", "unknown"]
+        },
+        "type": {
+          "type": "string",
+          "enum": ["employee", "visitor", "unknown_person", "ip_address", "device"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "location": {
+      "type": ["string", "null"],
+      "description": "Physical zone/room for camera and badge events. Null for pure network events with no physical location.",
+      "examples": ["server_room", "main_entrance", "floor_3_east", null]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp of when the event occurred.",
+      "examples": ["2026-09-26T14:32:10Z"]
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "Severity assigned by the Rule-Based Detector at the individual-event level (independent of any later incident-level severity)."
+    },
+    "flagged": {
+      "type": "boolean",
+      "description": "Whether the Rule-Based Detector flagged this event as suspicious. Unflagged events are normal background noise and should NOT be passed to the Fusion Engine."
+    },
+    "rule_triggered": {
+      "type": ["string", "null"],
+      "description": "Name/ID of the rule that caused flagged=true. Null if flagged=false.",
+      "examples": ["after_hours_badge_access", "restricted_zone_motion", "brute_force_login", null]
+    },
+    "raw_details": {
+      "type": "object",
+      "description": "Source-specific free-form extra fields (kept loose on purpose so each source can carry different metadata). Not used by the Fusion Engine directly, but useful for the dashboard's explain-why view and for Claude's summary.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
