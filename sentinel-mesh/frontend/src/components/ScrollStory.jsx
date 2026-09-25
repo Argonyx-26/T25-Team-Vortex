@@ -372,7 +372,10 @@ export default function ScrollStory() {
 
             {/* PANEL 5: OPERATOR ACTION, NOTIFICATIONS TRIAGE & LIVE CCTV */}
             <div className="w-screen h-full flex-shrink-0 flex items-center justify-center p-4 lg:p-8 overflow-y-auto">
-              <div className="w-full max-w-6xl mx-auto space-y-6">
+              <div className="w-full max-w-6xl mx-auto space-y-8 py-6">
+                {/* Physical Forensic Evidence Video Dossier */}
+                <CctvSensorView />
+
                 <PanelActionFatigue
                   isActive={activePanel === 5}
                   incident={activeIncident}
