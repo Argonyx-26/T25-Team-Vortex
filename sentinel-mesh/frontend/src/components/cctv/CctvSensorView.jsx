@@ -306,229 +306,261 @@ export default function CctvSensorView({
       )}
 
       {/* Video Screen & Forensic Telemetry Grid */}
-      <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+      <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Main Video Viewport (7 cols) */}
-        <div className="lg:col-span-7 relative border border-slate-800 bg-black aspect-video flex items-center justify-center overflow-hidden">
-          <video
-            ref={videoRef}
-            key={selectedVideo}
-            src={selectedVideo}
-            autoPlay
-            loop
-            muted
-            playsInline
-            onTimeUpdate={handleTimeUpdate}
-            className="w-full h-full object-cover opacity-90"
-          />
+        <div className="lg:col-span-7 flex flex-col space-y-3">
+          <div className="relative border border-slate-800 bg-black aspect-video flex items-center justify-center overflow-hidden z-10 shadow-[0_4px_30px_rgba(0,0,0,0.8)]">
+            <video
+              ref={videoRef}
+              key={selectedVideo}
+              src={selectedVideo}
+              autoPlay
+              loop
+              muted
+              playsInline
+              onTimeUpdate={handleTimeUpdate}
+              className="w-full h-full object-cover opacity-90"
+            />
 
-          {/* Tactical Overlay: Restricted Zone Polygon + Dynamic Target Box */}
-          {showReticle && (
-            <div className="absolute inset-0 pointer-events-none p-3 flex flex-col justify-between">
-              {/* Top HUD */}
-              <div className="flex items-center justify-between text-[10px] bg-black/85 px-2.5 py-1 border border-slate-800 backdrop-blur-xs">
-                <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 ${
-                    isInRestrictedZone
-                      ? 'bg-rose-500 animate-pulse'
-                      : personDetected
-                      ? 'bg-emerald-400'
-                      : 'bg-slate-500'
-                  }`} />
-                  <span className={`font-bold ${
-                    isInRestrictedZone
-                      ? 'text-rose-400'
-                      : personDetected
-                      ? 'text-emerald-400'
-                      : 'text-slate-400'
-                  }`}>
-                    {isInRestrictedZone
-                      ? 'ZONE BREACH [RESTRICTED VAULT (160, 70, 320, 240)]'
-                      : personDetected
-                      ? 'PERSON IN CORRIDOR [APPROACHING PERIMETER]'
-                      : 'SURVEILLANCE ACTIVE [PERIMETER SECURE // EMPTY FRAME]'}
-                  </span>
-                </div>
-                <div className="text-slate-400 font-mono">
-                  CAM-09 | {currentTime.toFixed(2)}s | 29.97 FPS
-                </div>
-              </div>
-
-              {/* Dynamic In-Video Alert Notification (Shows ONLY when intruder enters restricted area!) */}
-              {isInRestrictedZone && (
-                <div className="mx-auto my-1 bg-rose-950/95 border-2 border-rose-500 text-rose-100 px-4 py-1.5 text-xs font-black flex items-center gap-2 shadow-[0_0_25px_rgba(244,63,94,0.8)] animate-pulse">
-                  <AlertTriangle className="w-4 h-4 text-yellow-300 animate-bounce" />
-                  <span className="tracking-wide">CRITICAL ALERT: PERSON ENTERED RESTRICTED AREA (CAM-09)</span>
-                </div>
-              )}
-
-              {/* Center Canvas Area */}
-              <div className="relative w-full flex-1 my-1">
-                {/* 1. PHYSICAL RESTRICTED VAULT POLYGON (Spans right half: X: 160-320, Y: 70-240) */}
-                <div
-                  className={`absolute right-2 top-3 bottom-4 w-[50%] border-2 border-dashed transition-all duration-300 flex flex-col justify-between p-2 ${
-                    isInRestrictedZone
-                      ? 'border-rose-500 bg-rose-950/30 shadow-[0_0_20px_rgba(244,63,94,0.35)]'
-                      : 'border-amber-400/50 bg-amber-950/10'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-[9px] font-bold">
-                    <span className={`px-1.5 py-0.5 border ${
+            {/* Tactical Overlay: Restricted Zone Polygon + Dynamic Target Box */}
+            {showReticle && (
+              <div className="absolute inset-0 pointer-events-none p-3 flex flex-col justify-between z-20">
+                {/* Top HUD */}
+                <div className="flex items-center justify-between text-[10px] bg-black/85 px-2.5 py-1 border border-slate-800 backdrop-blur-xs">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 ${
                       isInRestrictedZone
-                        ? 'bg-rose-950 text-rose-200 border-rose-600'
-                        : 'bg-black/80 text-amber-300 border-amber-600/70'
+                        ? 'bg-rose-500 animate-pulse'
+                        : personDetected
+                        ? 'bg-emerald-400'
+                        : 'bg-slate-500'
+                    }`} />
+                    <span className={`font-bold ${
+                      isInRestrictedZone
+                        ? 'text-rose-400'
+                        : personDetected
+                        ? 'text-emerald-400'
+                        : 'text-slate-400'
                     }`}>
-                      RESTRICTED VAULT ZONE A
+                      {isInRestrictedZone
+                        ? 'ZONE BREACH [RESTRICTED VAULT (160, 70, 320, 240)]'
+                        : personDetected
+                        ? 'PERSON IN CORRIDOR [APPROACHING PERIMETER]'
+                        : 'SURVEILLANCE ACTIVE [PERIMETER SECURE // EMPTY FRAME]'}
                     </span>
-                    <span className="text-slate-400">POLYGON (160, 70, 320, 240)</span>
                   </div>
-
-                  <div className="text-right text-[8px] text-slate-400">
-                    {isInRestrictedZone ? (
-                      <span className="text-rose-400 font-bold bg-black/80 px-1 py-0.5 border border-rose-700 animate-pulse">
-                        🚨 INTRUDER IN ZONE // TRESPASS
-                      </span>
-                    ) : (
-                      <span className="text-emerald-400 font-semibold bg-black/80 px-1 py-0.5 border border-emerald-700">
-                        PERIMETER CLEAR
-                      </span>
-                    )}
+                  <div className="text-slate-400 font-mono">
+                    CAM-09 | {currentTime.toFixed(2)}s | 29.97 FPS
                   </div>
                 </div>
 
-                {/* 2. DYNAMIC TARGET TRACKER (Appears ONLY when person is physically detected!) */}
-                {personDetected && currentTrack && (
-                  <div
-                    className={`absolute transition-all duration-200 flex flex-col justify-between p-1.5 border-2 ${
-                      isInRestrictedZone
-                        ? 'border-rose-500 bg-rose-500/20 shadow-[0_0_25px_rgba(244,63,94,0.5)]'
-                        : 'border-emerald-400 bg-emerald-400/10'
-                    }`}
-                    style={{
-                      left: `${currentTrack.left_pct}%`,
-                      top: `${currentTrack.top_pct}%`,
-                      width: `${currentTrack.width_pct}%`,
-                      height: `${currentTrack.height_pct}%`
-                    }}
-                  >
-                    <div className="flex items-center justify-between text-[9px]">
-                      <span className={`font-bold px-1 py-0.2 border ${
-                        isInRestrictedZone
-                          ? 'bg-black/95 text-rose-300 border-rose-600'
-                          : 'bg-black/95 text-emerald-300 border-emerald-600'
-                      }`}>
-                        {isInRestrictedZone ? 'TARGET: employee_42' : 'TARGET: #TRK-0042'}
-                      </span>
-                      <span className="bg-black/80 px-1 text-slate-300 text-[8px]">
-                        {isInRestrictedZone ? 'IN ZONE' : 'OUTSIDE'}
-                      </span>
-                    </div>
-
-                    <div className="self-end">
-                      <span className={`text-[8px] font-bold px-1 py-0.2 border ${
-                        isInRestrictedZone
-                          ? 'bg-black/95 text-rose-400 border-rose-700 animate-pulse'
-                          : 'bg-black/95 text-slate-300 border-slate-700'
-                      }`}>
-                        {isInRestrictedZone ? `DWELL: ${dwellTime}s` : 'SAFE'}
-                      </span>
-                    </div>
+                {/* Dynamic In-Video Alert Notification */}
+                {isInRestrictedZone && (
+                  <div className="mx-auto my-1 bg-rose-950/95 border-2 border-rose-500 text-rose-100 px-3 py-1 text-xs font-black flex items-center gap-2 shadow-[0_0_25px_rgba(244,63,94,0.8)] animate-pulse">
+                    <AlertTriangle className="w-4 h-4 text-yellow-300 animate-bounce" />
+                    <span className="tracking-wide">CRITICAL: RESTRICTED ZONE A BREACH</span>
                   </div>
                 )}
+
+                {/* Center Canvas Area */}
+                <div className="relative w-full flex-1 my-1">
+                  {/* 1. PHYSICAL RESTRICTED VAULT POLYGON (Spans right half: X: 160-320, Y: 70-240) */}
+                  <div
+                    className={`absolute right-2 top-3 bottom-4 w-[50%] border-2 border-dashed transition-all duration-300 flex flex-col justify-between p-2 ${
+                      isInRestrictedZone
+                        ? 'border-rose-500 bg-rose-950/30 shadow-[0_0_20px_rgba(244,63,94,0.35)]'
+                        : 'border-amber-400/50 bg-amber-950/10'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-[9px] font-bold">
+                      <span className={`px-1.5 py-0.5 border ${
+                        isInRestrictedZone
+                          ? 'bg-rose-950 text-rose-200 border-rose-600'
+                          : 'bg-black/80 text-amber-300 border-amber-600/70'
+                      }`}>
+                        RESTRICTED VAULT ZONE A
+                      </span>
+                      <span className="text-slate-400">POLYGON (160, 70, 320, 240)</span>
+                    </div>
+
+                    <div className="text-right text-[8px] text-slate-400">
+                      {isInRestrictedZone ? (
+                        <span className="text-rose-400 font-bold bg-black/80 px-1 py-0.5 border border-rose-700 animate-pulse">
+                          🚨 INTRUDER IN ZONE // TRESPASS
+                        </span>
+                      ) : (
+                        <span className="text-emerald-400 font-semibold bg-black/80 px-1 py-0.5 border border-emerald-700">
+                          PERIMETER CLEAR
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. DYNAMIC TARGET TRACKER (Appears ONLY when person is physically detected!) */}
+                  {personDetected && currentTrack && (
+                    <div
+                      className={`absolute transition-all duration-200 flex flex-col justify-between p-1.5 border-2 ${
+                        isInRestrictedZone
+                          ? 'border-rose-500 bg-rose-500/20 shadow-[0_0_25px_rgba(244,63,94,0.5)]'
+                          : 'border-emerald-400 bg-emerald-400/10'
+                      }`}
+                      style={{
+                        left: `${currentTrack.left_pct}%`,
+                        top: `${currentTrack.top_pct}%`,
+                        width: `${currentTrack.width_pct}%`,
+                        height: `${currentTrack.height_pct}%`
+                      }}
+                    >
+                      <div className="flex items-center justify-between text-[9px]">
+                        <span className={`font-bold px-1 py-0.2 border ${
+                          isInRestrictedZone
+                            ? 'bg-black/95 text-rose-300 border-rose-600'
+                            : 'bg-black/95 text-emerald-300 border-emerald-600'
+                        }`}>
+                          {isInRestrictedZone ? 'TARGET: employee_42' : 'TARGET: #TRK-0042'}
+                        </span>
+                        <span className="bg-black/80 px-1 text-slate-300 text-[8px]">
+                          {isInRestrictedZone ? 'IN ZONE' : 'OUTSIDE'}
+                        </span>
+                      </div>
+
+                      <div className="self-end">
+                        <span className={`text-[8px] font-bold px-1 py-0.2 border ${
+                          isInRestrictedZone
+                            ? 'bg-black/95 text-rose-400 border-rose-700 animate-pulse'
+                            : 'bg-black/95 text-slate-300 border-slate-700'
+                        }`}>
+                          {isInRestrictedZone ? `DWELL: ${dwellTime}s` : 'SAFE'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom HUD */}
+                <div className="text-[10px] text-slate-300 flex items-center justify-between bg-black/85 px-2.5 py-1 border border-slate-800">
+                  <span className="text-cyan-300 font-semibold">SENSOR: CAM-09 (East Vault Axis)</span>
+                  <span className={
+                    isInRestrictedZone
+                      ? 'text-rose-400 font-bold'
+                      : personDetected
+                      ? 'text-emerald-400 font-bold'
+                      : 'text-slate-400 font-semibold'
+                  }>
+                    {isInRestrictedZone
+                      ? 'SECURITY BREACH: restricted_zone_motion FLAGGED'
+                      : personDetected
+                      ? 'PERSON DETECTED (CORRIDOR APPROACH)'
+                      : 'PERIMETER CLEAR: NO TARGET DETECTED'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* DEDICATED PLAYBACK CONSOLE (Cleanly separated below video - ZERO OVERLAP) */}
+          <div className="bg-[#070b16] border border-slate-800 p-3 space-y-2 text-xs font-mono">
+            {/* Timeline Progress Bar */}
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-cyan-400 font-bold w-12 text-right">
+                {currentTime.toFixed(1)}s
+              </span>
+              <div
+                className="flex-1 h-2 bg-slate-900 border border-slate-800 relative cursor-pointer group"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                  jumpToTime(pct * (videoRef.current?.duration || 60));
+                }}
+              >
+                <div
+                  className={`h-full transition-all ${
+                    isInRestrictedZone ? 'bg-rose-500 shadow-[0_0_10px_#ef4444]' : 'bg-cyan-400'
+                  }`}
+                  style={{
+                    width: `${Math.min(100, (currentTime / (videoRef.current?.duration || 60)) * 100)}%`
+                  }}
+                />
+              </div>
+              <span className="text-[11px] text-slate-500 w-12">
+                {videoRef.current?.duration ? `${videoRef.current.duration.toFixed(1)}s` : '58.0s'}
+              </span>
+            </div>
+
+            {/* Control & Preset Buttons */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center gap-1.5 cursor-pointer font-bold border border-slate-700"
+                >
+                  {isPlaying ? <Pause className="w-3.5 h-3.5 text-amber-400" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
+                  <span>{isPlaying ? 'PAUSE' : 'PLAY'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => jumpToTime(4.0)}
+                  className={`px-2 py-1 border text-[11px] cursor-pointer transition-colors ${
+                    currentTime < 15.0
+                      ? 'bg-slate-800 text-cyan-300 border-cyan-600 font-bold'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="View empty room state where zero alerts or boxes appear"
+                >
+                  04s EMPTY
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => jumpToTime(18.0)}
+                  className={`px-2 py-1 border text-[11px] cursor-pointer transition-colors ${
+                    currentTime >= 15.0 && currentTime < 27.2
+                      ? 'bg-emerald-950 text-emerald-300 border-emerald-600 font-bold'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="View person entering camera frame on the left (outside restricted zone)"
+                >
+                  18s APPROACHING
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => jumpToTime(27.5)}
+                  className={`px-2 py-1 border text-[11px] cursor-pointer font-bold transition-colors ${
+                    isInRestrictedZone && currentTime < 35.0
+                      ? 'bg-rose-950 text-rose-300 border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.4)]'
+                      : 'bg-rose-950/70 border-rose-800 text-rose-200 hover:bg-rose-900'
+                  }`}
+                  title="Jump directly to the exact moment intruder breaches restricted zone"
+                >
+                  <RotateCcw className="w-3 h-3 inline mr-1" />
+                  27.5s ZONE ENTRY
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => jumpToTime(46.0)}
+                  className={`px-2 py-1 border text-[11px] cursor-pointer font-bold transition-colors ${
+                    currentTime >= 42.0 && currentTime <= 54.0
+                      ? 'bg-rose-950 text-rose-300 border-rose-500 shadow-[0_0_12px_rgba(244,63,94,0.4)]'
+                      : 'bg-slate-900 border-slate-800 text-rose-300 hover:text-white'
+                  }`}
+                  title="View intruder actively loitering inside the vault"
+                >
+                  46s BREACH
+                </button>
               </div>
 
-              {/* Bottom HUD */}
-              <div className="text-[10px] text-slate-300 flex items-center justify-between bg-black/85 px-2.5 py-1 border border-slate-800">
-                <span className="text-cyan-300 font-semibold">SENSOR: CAM-09 (East Vault Axis)</span>
-                <span className={
-                  isInRestrictedZone
-                    ? 'text-rose-400 font-bold'
-                    : personDetected
-                    ? 'text-emerald-400 font-bold'
-                    : 'text-slate-400 font-semibold'
-                }>
-                  {isInRestrictedZone
-                    ? 'SECURITY BREACH: restricted_zone_motion FLAGGED'
-                    : personDetected
-                    ? 'PERSON DETECTED (CORRIDOR APPROACH)'
-                    : 'PERIMETER CLEAR: NO TARGET DETECTED'}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Playback Bar with Exact Timeline Demonstrations */}
-          <div className="absolute bottom-2 left-2 right-2 flex flex-wrap items-center justify-between gap-2 bg-black/90 px-3 py-1.5 border border-slate-800 text-xs">
-            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={togglePlay}
-                className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center gap-1 cursor-pointer"
+                onClick={() => setShowReticle(!showReticle)}
+                className="px-2 py-1 bg-slate-900 border border-slate-700 text-cyan-300 hover:text-cyan-200 cursor-pointer text-[11px]"
               >
-                {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
-                <span>{isPlaying ? 'PAUSE' : 'PLAY'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => jumpToTime(4.0)}
-                className={`px-2 py-0.5 border text-[11px] cursor-pointer ${
-                  currentTime < 15.0
-                    ? 'bg-slate-800 text-cyan-300 border-cyan-600 font-bold'
-                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200'
-                }`}
-                title="View empty room state where zero alerts or boxes appear"
-              >
-                EMPTY ROOM (4s)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => jumpToTime(18.0)}
-                className={`px-2 py-0.5 border text-[11px] cursor-pointer ${
-                  currentTime >= 15.0 && currentTime < 27.2
-                    ? 'bg-emerald-950 text-emerald-300 border-emerald-600 font-bold'
-                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200'
-                }`}
-                title="View person entering camera frame on the left (outside restricted zone)"
-              >
-                APPROACHING (18s)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => jumpToTime(27.5)}
-                className={`px-2 py-0.5 border text-[11px] cursor-pointer font-bold ${
-                  isInRestrictedZone && currentTime < 35.0
-                    ? 'bg-rose-950 text-rose-300 border-rose-600'
-                    : 'bg-rose-950/70 border-rose-800 text-rose-200 hover:bg-rose-900'
-                }`}
-                title="Jump directly to the exact moment intruder breaches restricted zone"
-              >
-                <RotateCcw className="w-3 h-3 inline mr-1" />
-                ZONE ENTRY (27.5s)
-              </button>
-
-              <button
-                type="button"
-                onClick={() => jumpToTime(46.0)}
-                className={`px-2 py-0.5 border text-[11px] cursor-pointer font-bold ${
-                  currentTime >= 42.0 && currentTime <= 54.0
-                    ? 'bg-rose-950 text-rose-300 border-rose-600'
-                    : 'bg-slate-900 border-slate-700 text-rose-300 hover:text-white'
-                }`}
-                title="View intruder actively loitering inside the vault"
-              >
-                ACTIVE BREACH (46s)
+                {showReticle ? 'HIDE HUD' : 'SHOW HUD'}
               </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowReticle(!showReticle)}
-              className="px-2 py-0.5 bg-slate-900 border border-slate-700 text-cyan-300 hover:text-cyan-200 cursor-pointer text-[11px]"
-            >
-              {showReticle ? 'HIDE HUD' : 'SHOW HUD'}
-            </button>
           </div>
         </div>
 

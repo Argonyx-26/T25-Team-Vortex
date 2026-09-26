@@ -500,6 +500,7 @@ export default function LandingDashboard() {
             <PanelFlaggedEvents
               isActive={true}
               events={events}
+              onOpenReport={() => setIsReportOpen(true)}
             />
           </div>
         </section>
