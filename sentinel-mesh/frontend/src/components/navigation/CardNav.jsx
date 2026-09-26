@@ -1,13 +1,10 @@
 import React from 'react';
-import { Shield, Activity, Bell, FileText, Lock, RefreshCw, Radio } from 'lucide-react';
+import { Shield, Sparkles, Eye, FileSpreadsheet, Terminal, Bell, Lock, FileText, RefreshCw } from 'lucide-react';
 
 /**
  * CardNav
- * High-tech card segmented navigation bar.
- * Includes:
- * - Online status indicator: Top-right in nav bar, small monospace text + single square/dot, driven by polling GET / every 5 seconds.
- * - Tab cards with live metrics
- * - Compliance modal triggers
+ * High-tech modular card navigation bar.
+ * Clean, distinct module topics with zero overlap.
  */
 export default function CardNav({
   activeTab,
@@ -22,12 +19,11 @@ export default function CardNav({
   isResetting
 }) {
   const navCards = [
-    { id: 'overview', label: '01 / OVERVIEW', badge: null },
-    { id: 'telemetry', label: '02 / TELEMETRY', badge: eventCount != null ? eventCount : null },
-    { id: 'fusion', label: '03 / CORRELATION', badge: '3-WAY' },
-    { id: 'incidents', label: '04 / INCIDENTS', badge: incidentCount != null ? incidentCount : null, alert: (incidentCount || 0) > 0 },
-    { id: 'notifications', label: '05 / NOTIFICATIONS', badge: alertCount != null ? alertCount : null, alert: (alertCount || 0) > 0 },
-    { id: 'cctv', label: '06 / CCTV OPTICAL', badge: 'LIVE' },
+    { id: 'constellation', label: '01 / CONSTELLATION', icon: Sparkles, badge: incidentCount != null ? incidentCount : null, alert: (incidentCount || 0) > 0 },
+    { id: 'cctv', label: '02 / PHYSICAL CCTV', icon: Eye, badge: 'PROVE' },
+    { id: 'digital-csv', label: '03 / DIGITAL CSV', icon: FileSpreadsheet, badge: 'NSL-KDD' },
+    { id: 'telemetry', label: '04 / RAW TELEMETRY', icon: Terminal, badge: eventCount != null ? eventCount : null },
+    { id: 'notifications', label: '05 / NOTIFICATIONS', icon: Bell, badge: alertCount != null ? alertCount : null, alert: (alertCount || 0) > 0 },
   ];
 
   const handleCardClick = (id) => {
@@ -39,26 +35,26 @@ export default function CardNav({
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#050811]/95 backdrop-blur-md border-b border-cyan-950/80 px-4 lg:px-8 py-3">
+    <header className="sticky top-0 z-50 bg-[#040713]/95 backdrop-blur-md border-b border-cyan-950/80 px-4 lg:px-8 py-3 font-mono">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Brand & Online Indicator */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 border border-cyan-400 bg-cyan-950/40 flex items-center justify-center text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.3)]">
+            <div className="w-8 h-8 border border-cyan-400 bg-cyan-950/40 flex items-center justify-center text-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.3)]">
               <Shield className="w-4 h-4" />
             </div>
             <div>
-              <div className="font-mono text-sm font-bold text-slate-100 tracking-wider">
+              <div className="text-sm font-bold text-slate-100 tracking-wider">
                 SENTINEL<span className="text-cyan-400">MESH</span>
               </div>
-              <div className="font-mono text-[9px] text-slate-500 tracking-widest uppercase">
+              <div className="text-[9px] text-slate-500 tracking-widest uppercase">
                 Threat Correlation Engine
               </div>
             </div>
           </div>
 
-          {/* Online Status Indicator (Required: top-right in nav bar, small monospace text + single square/dot) */}
-          <div className="flex items-center gap-2 px-2.5 py-1 bg-black/60 border border-slate-800 font-mono text-xs">
+          {/* Online Status Indicator (polled from GET /) */}
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-black/60 border border-slate-800 text-xs">
             <span
               className={`w-2 h-2 ${
                 onlineStatus ? 'bg-emerald-400 shadow-[0_0_8px_#10b981]' : 'bg-rose-500 shadow-[0_0_8px_#ef4444]'
@@ -75,20 +71,23 @@ export default function CardNav({
           </div>
         </div>
 
-        {/* Card Segment Tabs */}
+        {/* Modular Card Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
           {navCards.map((card) => {
             const isActive = activeTab === card.id;
+            const Icon = card.icon;
             return (
               <button
                 key={card.id}
+                type="button"
                 onClick={() => handleCardClick(card.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 font-mono text-xs transition-all whitespace-nowrap cursor-pointer border ${
+                className={`flex items-center gap-2 px-3 py-1.5 text-xs transition-all whitespace-nowrap cursor-pointer border ${
                   isActive
-                    ? 'border-cyan-400 bg-cyan-950/50 text-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.2)]'
+                    ? 'border-cyan-400 bg-cyan-950/60 text-cyan-300 font-bold shadow-[0_0_12px_rgba(0,240,255,0.25)]'
                     : 'border-slate-800/80 bg-[#070b14] text-slate-400 hover:border-slate-700 hover:text-slate-200'
                 }`}
               >
+                <Icon className="w-3.5 h-3.5" />
                 <span>{card.label}</span>
                 {card.badge != null && (
                   <span
@@ -109,8 +108,9 @@ export default function CardNav({
         {/* Action Controls & Legal Modals */}
         <div className="flex items-center gap-2 justify-end">
           <button
+            type="button"
             onClick={() => onOpenLegalModal('terms')}
-            className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-slate-400 hover:text-slate-200 border border-slate-800 bg-[#070b14] font-mono text-[11px] cursor-pointer"
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-slate-400 hover:text-slate-200 border border-slate-800 bg-[#070b14] text-[11px] cursor-pointer"
             title="Terms and Conditions"
           >
             <FileText className="w-3 h-3 text-cyan-400" />
@@ -118,8 +118,9 @@ export default function CardNav({
           </button>
 
           <button
+            type="button"
             onClick={() => onOpenLegalModal('privacy')}
-            className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-slate-400 hover:text-slate-200 border border-slate-800 bg-[#070b14] font-mono text-[11px] cursor-pointer"
+            className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-slate-400 hover:text-slate-200 border border-slate-800 bg-[#070b14] text-[11px] cursor-pointer"
             title="Privacy Policy"
           >
             <Lock className="w-3 h-3 text-emerald-400" />
@@ -127,9 +128,10 @@ export default function CardNav({
           </button>
 
           <button
+            type="button"
             onClick={onReset}
             disabled={isResetting}
-            className="flex items-center gap-1 px-2.5 py-1 text-amber-300 border border-amber-800/60 bg-amber-950/30 hover:bg-amber-950/60 font-mono text-[11px] transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1 text-amber-300 border border-amber-800/60 bg-amber-950/30 hover:bg-amber-950/60 text-[11px] transition-colors cursor-pointer"
             title="Reset Pipeline State"
           >
             <RefreshCw className={`w-3 h-3 ${isResetting ? 'animate-spin' : ''}`} />
