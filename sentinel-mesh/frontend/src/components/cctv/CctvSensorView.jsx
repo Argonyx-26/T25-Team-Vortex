@@ -164,65 +164,102 @@ export default function CctvSensorView() {
             className="w-full h-full object-cover opacity-90"
           />
 
-          {/* Tactical Bounding Reticle (Changes dynamically based on Zone Entry!) */}
+          {/* Tactical Overlay: Restricted Zone Polygon + Target Reticle (from simulator/run_combined_demo.py) */}
           {showReticle && (
-            <div className="absolute inset-0 pointer-events-none p-4 flex flex-col justify-between">
+            <div className="absolute inset-0 pointer-events-none p-3 flex flex-col justify-between">
               {/* Top HUD */}
-              <div className="flex items-center justify-between text-[10px] bg-black/75 px-2.5 py-1 border border-slate-800 backdrop-blur-xs">
+              <div className="flex items-center justify-between text-[10px] bg-black/80 px-2.5 py-1 border border-slate-800 backdrop-blur-xs">
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 ${isInRestrictedZone ? 'bg-rose-500 animate-pulse' : 'bg-emerald-400'}`} />
                   <span className={`font-bold ${isInRestrictedZone ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    {isInRestrictedZone ? 'ZONE BREACH [RESTRICTED VAULT]' : 'MONITORING [PERIMETER CLEAR]'}
+                    {isInRestrictedZone ? 'ZONE BREACH [RESTRICTED VAULT (160, 70, 320, 240)]' : 'MONITORING [PERIMETER CLEAR]'}
                   </span>
                 </div>
-                <div className="text-slate-400">TIME: {currentTime.toFixed(2)}s | 29.97 FPS</div>
+                <div className="text-slate-400 font-mono">
+                  SOURCE: run_combined_demo.py | CAM-09 | {currentTime.toFixed(2)}s
+                </div>
               </div>
 
               {/* Dynamic In-Video Alert Notification (Shows ONLY when person enters specific restricted area) */}
               {isInRestrictedZone && (
-                <div className="mx-auto my-1 bg-rose-950/90 border border-rose-500 text-rose-100 px-4 py-1.5 text-xs font-extrabold flex items-center gap-2 shadow-[0_0_20px_rgba(244,63,94,0.7)] animate-pulse">
+                <div className="mx-auto my-1 bg-rose-950/95 border-2 border-rose-500 text-rose-100 px-4 py-1.5 text-xs font-black flex items-center gap-2 shadow-[0_0_25px_rgba(244,63,94,0.8)] animate-pulse">
                   <AlertTriangle className="w-4 h-4 text-yellow-300 animate-bounce" />
                   <span className="tracking-wide">CRITICAL ALERT: PERSON ENTERED RESTRICTED AREA (CAM-09)</span>
                 </div>
               )}
 
-              {/* Dynamic Target Bounding Reticle */}
-              <div
-                className={`relative mx-auto transition-all duration-200 flex flex-col justify-between p-2 border-2 ${
-                  isInRestrictedZone
-                    ? 'w-52 h-64 border-rose-500 bg-rose-500/15 shadow-[0_0_25px_rgba(244,63,94,0.4)]'
-                    : 'w-44 h-56 border-emerald-400/80 bg-emerald-400/5'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 border ${
+              {/* Center Canvas Area: Visual Restricted Zone Polygon + Dynamic Target Box */}
+              <div className="relative w-full flex-1 my-1">
+                {/* 1. PHYSICAL RESTRICTED ZONE POLYGON (X: 160-320, Y: 70-240 / 50% width on right) */}
+                <div
+                  className={`absolute right-2 top-3 bottom-4 w-[52%] border-2 border-dashed transition-all duration-300 flex flex-col justify-between p-2 ${
                     isInRestrictedZone
-                      ? 'bg-black/90 text-rose-300 border-rose-600'
-                      : 'bg-black/90 text-emerald-300 border-emerald-600'
-                  }`}>
-                    {isInRestrictedZone ? 'TARGET: #TRK-0042 // IN ZONE' : 'TARGET: #TRK-0042 // OUTSIDE'}
-                  </span>
-                  <span className="text-[9px] bg-black/80 px-1 text-slate-300">
-                    {isInRestrictedZone ? 'TRESPASS' : 'NORMAL'}
-                  </span>
+                      ? 'border-rose-500 bg-rose-950/30 shadow-[0_0_20px_rgba(244,63,94,0.35)]'
+                      : 'border-amber-400/60 bg-amber-950/10'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-[9px] font-bold">
+                    <span className={`px-1.5 py-0.5 border ${
+                      isInRestrictedZone
+                        ? 'bg-rose-950 text-rose-200 border-rose-600'
+                        : 'bg-black/80 text-amber-300 border-amber-600/70'
+                    }`}>
+                      RESTRICTED VAULT ZONE A
+                    </span>
+                    <span className="text-slate-400">POLYGON (160, 70, 320, 240)</span>
+                  </div>
+
+                  <div className="text-right text-[8px] text-slate-400">
+                    {isInRestrictedZone ? (
+                      <span className="text-rose-400 font-bold bg-black/80 px-1 py-0.5 border border-rose-700">
+                        BREACH DETECTED // TRESPASS
+                      </span>
+                    ) : (
+                      <span className="text-emerald-400 font-semibold bg-black/80 px-1 py-0.5 border border-emerald-700">
+                        PERIMETER SECURE
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="self-end">
-                  <span className={`text-[9px] font-bold px-1.5 py-0.5 border ${
+                {/* 2. DYNAMIC TARGET TRACKER (Transitions from left hallway to inside zone) */}
+                <div
+                  className={`absolute top-2 transition-all duration-300 flex flex-col justify-between p-2 border-2 ${
                     isInRestrictedZone
-                      ? 'bg-black/90 text-rose-400 border-rose-700 animate-pulse'
-                      : 'bg-black/90 text-slate-400 border-slate-700'
-                  }`}>
-                    {isInRestrictedZone ? `DWELL: ${dwellTime}s` : 'DWELL: 0.0s'}
-                  </span>
+                      ? 'left-[54%] w-44 h-56 border-rose-500 bg-rose-500/20 shadow-[0_0_25px_rgba(244,63,94,0.5)]'
+                      : 'left-[12%] w-40 h-52 border-emerald-400/80 bg-emerald-400/10'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-[9px]">
+                    <span className={`font-bold px-1.5 py-0.5 border ${
+                      isInRestrictedZone
+                        ? 'bg-black/95 text-rose-300 border-rose-600'
+                        : 'bg-black/95 text-emerald-300 border-emerald-600'
+                    }`}>
+                      {isInRestrictedZone ? 'TARGET: employee_42' : 'TARGET: #TRK-0042'}
+                    </span>
+                    <span className="bg-black/80 px-1 text-slate-300 text-[8px]">
+                      {isInRestrictedZone ? 'IN ZONE' : 'OUTSIDE'}
+                    </span>
+                  </div>
+
+                  <div className="self-end">
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 border ${
+                      isInRestrictedZone
+                        ? 'bg-black/95 text-rose-400 border-rose-700 animate-pulse'
+                        : 'bg-black/95 text-slate-400 border-slate-700'
+                    }`}>
+                      {isInRestrictedZone ? `DWELL: ${dwellTime}s` : 'DWELL: 0.0s'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Bottom HUD */}
-              <div className="text-[10px] text-slate-300 flex items-center justify-between bg-black/75 px-2.5 py-1 border border-slate-800">
+              <div className="text-[10px] text-slate-300 flex items-center justify-between bg-black/80 px-2.5 py-1 border border-slate-800">
                 <span className="text-cyan-300 font-semibold">SENSOR: CAM-09 (East Vault Axis)</span>
                 <span className={isInRestrictedZone ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'}>
-                  {isInRestrictedZone ? 'EVENT: evt_00003 FLAGGED' : 'NO ANOMALY'}
+                  {isInRestrictedZone ? 'SECURITY BREACH: restricted_zone_motion FLAGGED' : 'PERIMETER CLEAR: NO ANOMALY'}
                 </span>
               </div>
             </div>
@@ -303,14 +340,22 @@ export default function CctvSensorView() {
               </div>
             </div>
 
-            {/* Cross-Stream Digital Verification Notice */}
-            <div className="mt-4 p-3 bg-[#060a14] border border-slate-800 text-[11px] text-slate-300 space-y-1.5">
-              <div className="text-cyan-400 font-bold uppercase text-[10px]">
-                CORRELATED WITH DIGITAL AUDIT LOGS:
+            {/* Cross-Stream Digital Verification & Simulation Corroboration */}
+            <div className="mt-4 p-3 bg-[#060a14] border border-cyan-900/60 text-[11px] text-slate-300 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-cyan-400 font-bold uppercase text-[10px]">
+                  CORRELATED BY: simulator/run_combined_demo.py
+                </span>
+                <span className="text-[9px] px-1.5 py-0.2 bg-emerald-950 text-emerald-300 border border-emerald-700">
+                  LIVE SYNCED
+                </span>
               </div>
-              <div>• 02:10:05Z: SSH Failed Login (IP: 10.0.0.5)</div>
-              <div>• 02:14:00Z: Turnstile Door D-114 Tap (employee_42)</div>
-              <div>• 02:15:30Z: Optical Vault Intrusion (CAM-09)</div>
+              <div className="text-slate-400 text-[10px] pb-1 border-b border-slate-800">
+                Multi-stage physical + digital attack sequence confirmed:
+              </div>
+              <div>• <strong className="text-amber-300">STAGE 1 (Network):</strong> NSL-KDD SSH brute force (IP: 10.0.0.5, attempt_count: 4)</div>
+              <div>• <strong className="text-emerald-300">STAGE 2 (Badge):</strong> Turnstile D-114 access at 02:14:00Z (employee_42)</div>
+              <div>• <strong className="text-rose-400">STAGE 3 (Physical CCTV):</strong> Vault polygon entry CAM-09 (dwell threshold exceeded)</div>
             </div>
           </div>
 

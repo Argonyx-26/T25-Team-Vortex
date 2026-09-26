@@ -145,8 +145,10 @@ def _process_pipeline() -> List[Dict]:
         groq_client.enrich_incident(incident, linked_events)
 
         # Standardize contract fields requested by frontend
-        confidence_val = incident.get("confidence", 0.75)
+        raw_conf = incident.get("confidence")
+        confidence_val = float(raw_conf) if raw_conf is not None else 0.75
         incident["predicted_confidence"] = confidence_val
+        incident["confidence"] = confidence_val
         summary_val = incident.get("summary", "Temporal correlation of multi-source telemetry events.")
         clean_summary = summary_val.replace("\u2014", " - ").replace("\u2013", " - ")
         incident["summary"] = clean_summary
@@ -167,7 +169,7 @@ def _process_pipeline() -> List[Dict]:
         updated_or_new.append(incident)
 
         # Generate notification for this incident
-        is_alert = incident.get("severity") in ("high", "critical") or confidence_val >= 0.75
+        is_alert = incident.get("severity") in ("high", "critical") or (confidence_val is not None and confidence_val >= 0.75)
         notif_type = "alert" if is_alert else "normal"
         notif_title = f"Incident {incident_id}: {incident.get('matched_attack_pattern', 'Correlated Anomaly')}"
         notif_msg = f"Fused {len(linked_events)} telemetry events across {', '.join(incident.get('locations', ['facility']))}."

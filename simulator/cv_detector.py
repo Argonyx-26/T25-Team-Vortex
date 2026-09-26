@@ -42,7 +42,7 @@ try:
 except ImportError:
     HAS_YOLO = False
 
-BACKEND_URL = "http://localhost:8000/events"
+BACKEND_URL = os.environ.get("SENTINEL_BACKEND_URL", "http://localhost:5000/events")
 
 def new_event_id() -> str:
     return f"evt_{uuid.uuid4().hex[:8]}"
@@ -108,9 +108,13 @@ def run_cctv_detector(video_source=None, loiter_threshold_sec=3.0, entity_id="em
     Detects person class, tracks presence in RESTRICTED_ZONE.
     Emits event to Sentinel Mesh upon loitering alert.
     """
-    if video_source is None:
-        # Check if sample video exists or webcam is available
-        if os.path.exists("worker-zone-detection.mp4"):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    if video_source is None or not os.path.exists(video_source):
+        # Look for local shoplifting_clip.mp4 first
+        local_clip = os.path.join(script_dir, "shoplifting_clip.mp4")
+        if os.path.exists(local_clip):
+            video_source = local_clip
+        elif os.path.exists("worker-zone-detection.mp4"):
             video_source = "worker-zone-detection.mp4"
         elif os.path.exists("attack_clip.mp4"):
             video_source = "attack_clip.mp4"
