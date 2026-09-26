@@ -5,7 +5,7 @@ from replay_events import replay
 
 def run_camera_stream():
     time.sleep(15)  # let the network anomaly land first
-    run_cctv_detector(video_source="sample_restricted_zone.mp4", loiter_threshold_sec=3.0, entity_id="employee_42")
+    run_cctv_detector(video_source="shoplifting_clip.mp4", loiter_threshold_sec=1.0, entity_id="employee_42")
 
 def run_network_stream():
     replay(delay_seconds=1.0, limit=50)
