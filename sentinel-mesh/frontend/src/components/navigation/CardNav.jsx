@@ -1,10 +1,10 @@
 import React from 'react';
-import { Shield, Sparkles, Eye, FileSpreadsheet, Terminal, Bell, Lock, FileText, RefreshCw } from 'lucide-react';
+import { Shield, Sparkles, Eye, FileSpreadsheet, Terminal, Bell, Lock, FileText, RefreshCw, Radio, GitMerge } from 'lucide-react';
 
 /**
  * CardNav
- * High-tech modular card navigation bar.
- * Clean, distinct module topics with zero overlap.
+ * High-tech modular card navigation bar for all 6 SentinelMesh modules.
+ * Clean, distinct module topics with zero overlap and high information density.
  */
 export default function CardNav({
   activeTab,
@@ -14,16 +14,18 @@ export default function CardNav({
   eventCount,
   incidentCount,
   alertCount,
+  flaggedCount = 0,
   onOpenLegalModal,
   onReset,
   isResetting
 }) {
   const navCards = [
     { id: 'constellation', label: '01 / CONSTELLATION', icon: Sparkles, badge: incidentCount != null ? incidentCount : null, alert: (incidentCount || 0) > 0 },
-    { id: 'cctv', label: '02 / PHYSICAL CCTV', icon: Eye, badge: 'PROVE' },
-    { id: 'digital-csv', label: '03 / DIGITAL CSV', icon: FileSpreadsheet, badge: 'NSL-KDD' },
-    { id: 'telemetry', label: '04 / RAW TELEMETRY', icon: Terminal, badge: eventCount != null ? eventCount : null },
-    { id: 'notifications', label: '05 / NOTIFICATIONS', icon: Bell, badge: alertCount != null ? alertCount : null, alert: (alertCount || 0) > 0 },
+    { id: 'telemetry', label: '02 / RAW STREAM', icon: Terminal, badge: eventCount != null ? eventCount : null },
+    { id: 'signals', label: '03 / FLAGGED', icon: Radio, badge: flaggedCount != null ? flaggedCount : null, alert: (flaggedCount || 0) > 0 },
+    { id: 'fusion', label: '04 / FUSION ENGINE', icon: GitMerge, badge: 'CORRELATE' },
+    { id: 'digital-csv', label: '05 / DIGITAL CSV', icon: FileSpreadsheet, badge: 'NSL-KDD' },
+    { id: 'cctv', label: '06 / PHYSICAL CCTV', icon: Eye, badge: 'ALERT' },
   ];
 
   const handleCardClick = (id) => {

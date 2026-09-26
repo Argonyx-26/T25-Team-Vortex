@@ -16,7 +16,8 @@ import {
   Zap,
   Lock,
   FileText,
-  FileSpreadsheet
+  FileSpreadsheet,
+  GitMerge
 } from 'lucide-react';
 
 import {
@@ -38,8 +39,13 @@ import TargetCursor from './effects/TargetCursor';
 import ClickSpark from './effects/ClickSpark';
 import ScrollFloat from './effects/ScrollFloat';
 import ConstellationCanvas from './constellation/ConstellationCanvas';
-import CctvSensorView from './cctv/CctvSensorView';
+import PanelRawStream from './panels/PanelRawStream';
+import PanelFlaggedEvents from './panels/PanelFlaggedEvents';
+import PanelFusionAnimation from './panels/PanelFusionAnimation';
 import DigitalCsvEvidence from './evidence/DigitalCsvEvidence';
+import PanelIncidentCard from './panels/PanelIncidentCard';
+import CctvSensorView from './cctv/CctvSensorView';
+import PanelActionFatigue from './panels/PanelActionFatigue';
 import NotificationsDrawer from './triage/NotificationsDrawer';
 import LegalModals from './compliance/LegalModals';
 
@@ -47,6 +53,7 @@ export default function LandingDashboard() {
   // Navigation & Modal State
   const [activeTab, setActiveTab] = useState('constellation');
   const [activeLegalModal, setActiveLegalModal] = useState(null);
+  const [operatorLoad, setOperatorLoad] = useState('normal'); // 'normal' | 'high'
 
   // Live Backend Data States
   const [isOnline, setIsOnline] = useState(false);
@@ -156,6 +163,27 @@ export default function LandingDashboard() {
     }
   };
 
+  // Status updates & incident actions
+  const handleUpdateStatus = async (incidentId, newStatus) => {
+    try {
+      await updateIncidentStatus(incidentId, newStatus);
+      setIncidents((prev) =>
+        prev.map((inc) => (inc.incident_id === incidentId ? { ...inc, status: newStatus } : inc))
+      );
+    } catch (err) {
+      console.error('Update status failed:', err);
+    }
+  };
+
+  const handleDismissIncident = async (incidentId) => {
+    try {
+      await dismissIncident(incidentId);
+      setIncidents((prev) => prev.filter((inc) => inc.incident_id !== incidentId));
+    } catch (err) {
+      console.error('Dismiss incident failed:', err);
+    }
+  };
+
   // Trigger simulated multi-step attack event
   const handleSimulateAttackStep = async () => {
     const timestamp = new Date().toISOString();
@@ -193,6 +221,7 @@ export default function LandingDashboard() {
 
   const flaggedCount = events.filter((e) => e.flagged).length;
   const alertNotifCount = notifications.filter((n) => n.type === 'alert' && !n.handled).length;
+  const activeIncident = incidents.find((i) => i.incident_id === selectedIncidentId) || incidents[0];
 
   return (
     <div className="min-h-screen bg-[#030611] text-slate-100 font-mono relative selection:bg-cyan-500/30 selection:text-cyan-200">
@@ -200,7 +229,7 @@ export default function LandingDashboard() {
       <TargetCursor />
       <ClickSpark />
 
-      {/* Segmented Modular Card Navigation Bar */}
+      {/* Segmented Modular Card Navigation Bar for All 6 Modules */}
       <CardNav
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -209,18 +238,19 @@ export default function LandingDashboard() {
         eventCount={events.length}
         incidentCount={incidents.length}
         alertCount={alertNotifCount}
+        flaggedCount={flaggedCount}
         onOpenLegalModal={setActiveLegalModal}
         onReset={handleReset}
         isResetting={isResetting}
       />
 
-      {/* Main Command Center Content */}
-      <main className="max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-12">
+      {/* Main Command Center Content (Dense, High-Tech Layout with Zero Empty Voids) */}
+      <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-8">
         {/* TOP HERO & SYSTEM METRICS */}
-        <section className="border border-slate-800 bg-[#050917] p-6 lg:p-8">
+        <section className="border border-slate-800 bg-[#050917] p-5 lg:p-7 shadow-[0_4px_25px_rgba(0,0,0,0.5)]">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="max-w-3xl">
-              <div className="flex items-center gap-2 mb-2 text-xs text-cyan-400 font-bold tracking-widest uppercase">
+              <div className="flex items-center gap-2 mb-1.5 text-xs text-cyan-400 font-bold tracking-widest uppercase">
                 <span className="w-2 h-2 bg-cyan-400 animate-ping inline-block" />
                 <span>SENTINELMESH MULTI-VECTOR THREAT ENGINE</span>
               </div>
@@ -245,7 +275,7 @@ export default function LandingDashboard() {
           </div>
 
           {/* KPI Metrics */}
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-slate-800/80 pt-5">
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-slate-800/80 pt-4">
             <div className="border border-slate-800 bg-[#080d1a] p-3.5">
               <div className="text-[10px] text-slate-500 uppercase tracking-widest">INGESTED TELEMETRY</div>
               <div className="text-xl font-bold text-slate-100 mt-1">
@@ -276,11 +306,16 @@ export default function LandingDashboard() {
           </div>
         </section>
 
-        {/* MODULE 1: THREAT CONSTELLATION CANVAS */}
+        {/* ========================================================
+            MODULE 01: THREAT CONSTELLATION CANVAS
+            ======================================================== */}
         <section id="section-constellation" className="space-y-3">
-          <div className="flex items-center gap-2 text-xs text-cyan-400 font-bold uppercase tracking-wider">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span>MODULE 01 // THREAT CONSTELLATION CANVAS</span>
+          <div className="flex items-center justify-between border-b border-cyan-900/60 pb-2">
+            <div className="flex items-center gap-2 text-xs text-cyan-400 font-bold uppercase tracking-wider">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span>MODULE 01 // THREAT CONSTELLATION & PREDICTED ATTACK PATH</span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-mono">DETERMINISTIC SPATIAL CORRELATION</span>
           </div>
           <ConstellationCanvas
             events={events}
@@ -290,51 +325,23 @@ export default function LandingDashboard() {
           />
         </section>
 
-        {/* MODULE 2: PHYSICAL CCTV FORENSIC EVIDENCE */}
-        <section id="section-cctv" className="space-y-3">
-          <div className="flex items-center gap-2 text-xs text-rose-400 font-bold uppercase tracking-wider">
-            <Eye className="w-4 h-4 text-rose-400" />
-            <span>MODULE 02 // PHYSICAL FORENSIC VIDEO EVIDENCE</span>
-          </div>
-          <CctvSensorView />
-        </section>
-
-        {/* MODULE 3: DIGITAL CSV TELEMETRY & PACKET EVIDENCE */}
-        <section id="section-digital-csv" className="space-y-3">
-          <div className="flex items-center gap-2 text-xs text-amber-400 font-bold uppercase tracking-wider">
-            <FileSpreadsheet className="w-4 h-4 text-amber-400" />
-            <span>MODULE 03 // DIGITAL CSV TELEMETRY EVIDENCE (NSL-KDD + ACCESS LOGS)</span>
-          </div>
-          <DigitalCsvEvidence />
-        </section>
-
-        {/* MODULE 4: OPERATIONAL NOTIFICATIONS TRIAGE */}
-        <section id="section-notifications" className="space-y-3">
-          <div className="flex items-center gap-2 text-xs text-cyan-400 font-bold uppercase tracking-wider">
-            <AlertTriangle className="w-4 h-4 text-cyan-400" />
-            <span>MODULE 04 // OPERATIONAL NOTIFICATIONS TRIAGE</span>
-          </div>
-          <NotificationsDrawer
-            notifications={notifications}
-            onAcknowledgeSuccess={(updatedNotif) => {
-              setNotifications((prev) =>
-                prev.map((n) => (n.id === updatedNotif.id ? { ...n, handled: true } : n))
-              );
-            }}
-          />
-        </section>
-
-        {/* MODULE 5: RAW MULTI-STREAM TELEMETRY INGESTION */}
+        {/* ========================================================
+            MODULE 02: RAW ASYNCHRONOUS TELEMETRY STREAM
+            ======================================================== */}
         <section id="section-telemetry" className="space-y-3">
-          <div className="flex items-center gap-2 text-xs text-slate-400 font-bold uppercase tracking-wider">
-            <Terminal className="w-4 h-4 text-slate-400" />
-            <span>MODULE 05 // RAW TELEMETRY INGESTION BUFFER (/events)</span>
+          <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex items-center gap-2 text-xs text-slate-300 font-bold uppercase tracking-wider">
+              <Terminal className="w-4 h-4 text-cyan-400" />
+              <span>MODULE 02 // RAW MULTI-STREAM ASYNCHRONOUS TELEMETRY INGESTION</span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-mono">CONTINUOUS /events BUFFER</span>
           </div>
-          <div className="border border-slate-800 bg-[#060a14] p-5 lg:p-6">
+
+          <div className="border border-slate-800 bg-[#060a14] p-5">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4 mb-4">
               <div>
-                <h3 className="text-base font-bold text-slate-100">Live Telemetry Ingestion Log</h3>
-                <div className="text-xs text-slate-400 mt-0.5">Continuous stream of camera, badge, and network events</div>
+                <h3 className="text-base font-bold text-slate-100">Live Ingestion Event Feed</h3>
+                <div className="text-xs text-slate-400 mt-0.5">Real-time stream of camera, RFID badge, and network socket frames</div>
               </div>
 
               <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -369,7 +376,7 @@ export default function LandingDashboard() {
               </div>
             </div>
 
-            {/* Table */}
+            {/* Ingestion Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
@@ -384,8 +391,8 @@ export default function LandingDashboard() {
                     <th className="py-2.5 px-3 text-right">SEVERITY</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {filteredEvents.map((e) => (
+                <tbody className="divide-y divide-slate-800/60 font-mono">
+                  {filteredEvents.slice(0, 10).map((e) => (
                     <tr key={e.event_id} className="hover:bg-slate-900/40 transition-colors">
                       <td className="py-2 px-3 text-cyan-300 font-semibold">{e.event_id}</td>
                       <td className="py-2 px-3 text-slate-400 text-[11px]">{e.timestamp}</td>
@@ -424,6 +431,116 @@ export default function LandingDashboard() {
             </div>
           </div>
         </section>
+
+        {/* ========================================================
+            MODULE 03: RULE-BASED ANOMALY DETECTION SIGNALS
+            ======================================================== */}
+        <section id="section-signals" className="space-y-3">
+          <div className="flex items-center justify-between border-b border-amber-900/60 pb-2">
+            <div className="flex items-center gap-2 text-xs text-amber-400 font-bold uppercase tracking-wider">
+              <Radio className="w-4 h-4 text-amber-400" />
+              <span>MODULE 03 // RULE-BASED ANOMALY DETECTION SIGNALS</span>
+            </div>
+            <span className="text-[10px] text-amber-400/80 font-mono">TARGET ENTITY CORRELATION</span>
+          </div>
+          <div className="border border-slate-800 bg-[#060a14] p-5">
+            <PanelFlaggedEvents
+              isActive={true}
+              events={events}
+            />
+          </div>
+        </section>
+
+        {/* ========================================================
+            MODULE 04: MULTI-STREAM TEMPORAL FUSION ENGINE
+            ======================================================== */}
+        <section id="section-fusion" className="space-y-3">
+          <div className="flex items-center justify-between border-b border-cyan-900/60 pb-2">
+            <div className="flex items-center gap-2 text-xs text-cyan-400 font-bold uppercase tracking-wider">
+              <GitMerge className="w-4 h-4 text-cyan-400" />
+              <span>MODULE 04 // MULTI-STREAM TEMPORAL FUSION ENGINE CONVERGENCE</span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-mono">SPATIOTEMPORAL GRAPH SYNTHESIS</span>
+          </div>
+          <div className="border border-slate-800 bg-[#060a14] p-5">
+            <PanelFusionAnimation
+              isActive={true}
+              events={events}
+              incident={activeIncident}
+            />
+          </div>
+        </section>
+
+        {/* ========================================================
+            MODULE 05: DIGITAL CSV TELEMETRY & PACKET CAPTURE EVIDENCE
+            ======================================================== */}
+        <section id="section-digital-csv" className="space-y-4">
+          <div className="flex items-center justify-between border-b border-amber-900/60 pb-2">
+            <div className="flex items-center gap-2 text-xs text-amber-400 font-bold uppercase tracking-wider">
+              <FileSpreadsheet className="w-4 h-4 text-amber-400" />
+              <span>MODULE 05 // DIGITAL CSV FORENSIC EVIDENCE (NSL-KDD DATASET + PACKET FLOWS)</span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-mono">CSV ROWS VERIFIED</span>
+          </div>
+
+          {/* Full Interactive Digital CSV Evidence Table */}
+          <DigitalCsvEvidence />
+
+          {/* Synthesized Incident Dossier & Explain Why Chain */}
+          <div className="border border-slate-800 bg-[#060a14] p-5">
+            <PanelIncidentCard
+              isActive={true}
+              operatorLoad={operatorLoad}
+              incident={activeIncident}
+              events={events}
+            />
+          </div>
+        </section>
+
+        {/* ========================================================
+            MODULE 06: PHYSICAL CCTV FORENSIC EVIDENCE & CONTAINMENT
+            ======================================================== */}
+        <section id="section-cctv" className="space-y-4">
+          <div className="flex items-center justify-between border-b border-rose-900/60 pb-2">
+            <div className="flex items-center gap-2 text-xs text-rose-400 font-bold uppercase tracking-wider">
+              <Eye className="w-4 h-4 text-rose-400" />
+              <span>MODULE 06 // PHYSICAL CCTV EVIDENCE & OPERATOR CONTAINMENT</span>
+            </div>
+            <span className="text-[10px] text-rose-400/80 font-mono">DYNAMIC RESTRICTED ZONE DETECTION</span>
+          </div>
+
+          {/* Physical CCTV Video Feed with Dynamic Zone Entry Alert */}
+          <CctvSensorView />
+
+          {/* Operator Containment & Notification Triage */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+            <div className="border border-slate-800 bg-[#060a14] p-5">
+              <div className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span>Operational Notifications Triage</span>
+              </div>
+              <NotificationsDrawer
+                notifications={notifications}
+                onAcknowledgeSuccess={(updatedNotif) => {
+                  setNotifications((prev) =>
+                    prev.map((n) => (n.id === updatedNotif.id ? { ...n, handled: true } : n))
+                  );
+                }}
+              />
+            </div>
+
+            <div className="border border-slate-800 bg-[#060a14] p-5">
+              <PanelActionFatigue
+                isActive={true}
+                operatorLoad={operatorLoad}
+                onToggleOperatorLoad={(newLoad) => setOperatorLoad(newLoad)}
+                incident={activeIncident}
+                onUpdateStatus={handleUpdateStatus}
+                onDismissIncident={handleDismissIncident}
+              />
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Floating Telemetry Status (ScrollFloat) */}
@@ -442,7 +559,7 @@ export default function LandingDashboard() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-[#02040a] mt-16 px-4 lg:px-8 py-8 text-slate-500 text-xs font-mono">
+      <footer className="border-t border-slate-800/80 bg-[#02040a] mt-12 px-4 lg:px-8 py-8 text-slate-500 text-xs font-mono">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <div className="text-slate-300 font-bold">SENTINELMESH CORRELATION ENGINE</div>
