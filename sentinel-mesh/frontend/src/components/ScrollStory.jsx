@@ -14,6 +14,7 @@ import ClickSpark from './effects/ClickSpark';
 import ScrollFloat from './effects/ScrollFloat';
 import LegalModals from './compliance/LegalModals';
 import CardNav from './navigation/CardNav';
+import ForensicIncidentReportModal from './reports/ForensicIncidentReportModal';
 
 import {
   checkOnlineStatus,
@@ -35,8 +36,10 @@ const TOTAL_PANELS = 6;
 
 export default function ScrollStory() {
   const [activePanel, setActivePanel] = useState(0);
+  const activePanelRef = useRef(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [activeLegalModal, setActiveLegalModal] = useState(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   // Live Backend Data States
   const [isOnline, setIsOnline] = useState(false);
@@ -52,7 +55,6 @@ export default function ScrollStory() {
   const scrollContainerRef = useRef(null);
   const pinnedViewportRef = useRef(null);
   const panelsRowRef = useRef(null);
-  const activePanelRef = useRef(0);
 
   useEffect(() => {
     activePanelRef.current = activePanel;
@@ -140,14 +142,19 @@ export default function ScrollStory() {
       const targetScroll = st.start + (targetIdx / (TOTAL_PANELS - 1)) * (st.end - st.start);
       window.scrollTo({ top: targetScroll, behavior: 'smooth' });
     } else if (scrollContainerRef.current) {
-      const totalDist = (TOTAL_PANELS - 1) * window.innerHeight * 1.3;
+      const totalDist = (TOTAL_PANELS - 1) * window.innerHeight;
       const targetY = scrollContainerRef.current.offsetTop + (targetIdx / (TOTAL_PANELS - 1)) * totalDist;
       window.scrollTo({ top: targetY, behavior: 'smooth' });
     }
     setActivePanel(targetIdx);
+    activePanelRef.current = targetIdx;
   }, []);
 
   // Ultra-Smooth GSAP Horizontal Scroll Setup (Mounted ONCE)
+  useEffect(() => {
+    activePanelRef.current = activePanel;
+  }, [activePanel]);
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       if (!panelsRowRef.current || !scrollContainerRef.current || !pinnedViewportRef.current) return;
@@ -162,7 +169,7 @@ export default function ScrollStory() {
           trigger: scrollContainerRef.current,
           pin: pinnedViewportRef.current,
           start: 'top top',
-          end: () => `+=${(TOTAL_PANELS - 1) * window.innerHeight * 1.3}`,
+          end: () => `+=${(TOTAL_PANELS - 1) * window.innerHeight}`,
           scrub: 1.0, // Responsive, buttery smooth 1.0s scrub
           anticipatePin: 1,
           invalidateOnRefresh: true,
@@ -171,6 +178,7 @@ export default function ScrollStory() {
             const rawIdx = Math.round(self.progress * (TOTAL_PANELS - 1));
             const clampedIdx = Math.min(TOTAL_PANELS - 1, Math.max(0, rawIdx));
             setActivePanel(clampedIdx);
+            activePanelRef.current = clampedIdx;
           },
         },
       });
@@ -251,7 +259,7 @@ export default function ScrollStory() {
     <div
       ref={scrollContainerRef}
       className="relative bg-[#050811] text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200"
-      style={{ height: `${TOTAL_PANELS * 130}vh` }}
+      style={{ height: `${TOTAL_PANELS * 100}vh` }}
     >
       {/* Tactical Reticle Target Cursor & Click Spark Canvas */}
       <TargetCursor />
@@ -281,6 +289,7 @@ export default function ScrollStory() {
           incidentCount={incidents.length}
           alertCount={alertNotifCount}
           onOpenLegalModal={setActiveLegalModal}
+          onOpenReport={() => setIsReportOpen(true)}
           onReset={handleReset}
           isResetting={isResetting}
         />
@@ -337,6 +346,7 @@ export default function ScrollStory() {
                 isActive={activePanel === 1}
                 onNext={() => goToPanel(2)}
                 events={events}
+                onOpenReport={() => setIsReportOpen(true)}
               />
             </div>
 
@@ -374,7 +384,13 @@ export default function ScrollStory() {
             <div className="w-screen h-full flex-shrink-0 flex items-center justify-center p-4 lg:p-8 overflow-y-auto">
               <div className="w-full max-w-6xl mx-auto space-y-8 py-6">
                 {/* Physical Forensic Evidence Video Dossier */}
-                <CctvSensorView />
+                <CctvSensorView
+                  onAlert={(alertEvent, alertNotif) => {
+                    if (alertNotif) setNotifications((prev) => [alertNotif, ...prev]);
+                    if (alertEvent) setEvents((prev) => [alertEvent, ...prev]);
+                  }}
+                  onOpenReport={() => setIsReportOpen(true)}
+                />
 
                 <PanelActionFatigue
                   isActive={activePanel === 5}
@@ -398,6 +414,14 @@ export default function ScrollStory() {
         flaggedCount={flaggedEvents.length}
         incidentCount={incidents.length}
         socketConnected={socketConnected}
+      />
+
+      {/* Forensic Incident Report Modal */}
+      <ForensicIncidentReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        incident={activeIncident}
+        events={events}
       />
 
       {/* Compliance Modals */}

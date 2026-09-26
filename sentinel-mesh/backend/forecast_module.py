@@ -42,7 +42,7 @@ ATTACK_PATTERNS = [
     {
         "name": "stolen_badge_then_exfiltration",
         "sequence": ["after_hours_badge_access", "restricted_zone_motion", "data_transfer_spike"],
-        "predicted_next_step": "Likely data exfiltration in progress — expect a large outbound transfer",
+        "predicted_next_step": "Likely data exfiltration in progress - expect a large outbound transfer",
         "base_confidence": 0.88,
         "escalate_to": "critical",
     },

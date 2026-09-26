@@ -23,6 +23,7 @@ Socket.IO live updates at ws://localhost:5000:
   "new_notification"
 """
 
+import os
 import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -184,25 +185,60 @@ def _process_pipeline() -> List[Dict]:
     return updated_or_new
 
 
-# --- Initial Seed Data ---
+# --- Initial Seed Data from Real NSL-KDD Dataset ---
+def _load_real_nslkdd_events():
+    events = []
+    csv_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "..", "simulator", "nslkdd_test.csv"))
+    if os.path.exists(csv_path):
+        import csv
+        try:
+            with open(csv_path, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for idx, row in enumerate(reader):
+                    if idx >= 30:
+                        break
+                    is_anomaly = row.get("class") == "anomaly"
+                    proto = row.get("protocol_type", "tcp")
+                    svc = row.get("service", "http")
+                    flag = row.get("flag", "SF")
+                    src_b = int(row.get("src_bytes", 0) or 0)
+                    dst_b = int(row.get("dst_bytes", 0) or 0)
+                    rule = "port_scan" if flag == "REJ" and proto == "tcp" else ("brute_force_login" if svc in ("ssh", "ftp", "telnet") and is_anomaly else ("packet_stream_anomaly" if is_anomaly else None))
+                    events.append({
+                        "event_id": f"evt_kdd_{idx+1:05d}",
+                        "source": "network",
+                        "event_type": "failed_login" if rule == "brute_force_login" else ("connection_rejected" if flag == "REJ" else "network_flow"),
+                        "entity": {"id": "employee_42" if idx < 3 else f"host_{idx}", "type": "employee" if idx < 3 else "device"},
+                        "location": f"{proto}_{svc}",
+                        "timestamp": f"2026-09-26T02:{10 + (idx // 6):02d}:{(idx * 12) % 60:02d}Z",
+                        "severity": "high" if rule == "brute_force_login" else ("medium" if is_anomaly else "low"),
+                        "flagged": is_anomaly,
+                        "rule_triggered": rule,
+                        "raw_details": {
+                            "protocol_type": proto,
+                            "service": svc,
+                            "flag": flag,
+                            "src_bytes": src_b,
+                            "dst_bytes": dst_b,
+                            "dataset": "NSL-KDD KDDTest+",
+                            "ip": f"10.0.0.{idx+2}"
+                        }
+                    })
+        except Exception as e:
+            print(f"[NSL-KDD Ingestion Warning]: {e}")
+    return events
+
+
 def _seed_initial_state():
     if _events:
         return
-    initial_raw = [
+
+    nslkdd_events = _load_real_nslkdd_events()
+
+    # Physical evidence events correlated with target employee_42
+    physical_events = [
         {
-            "event_id": "evt_00001",
-            "source": "network",
-            "event_type": "failed_login",
-            "entity": {"id": "employee_42", "type": "employee"},
-            "location": "dmz_gateway",
-            "timestamp": "2026-09-26T02:10:05Z",
-            "severity": "low",
-            "flagged": True,
-            "rule_triggered": "brute_force_login",
-            "raw_details": {"attempt_count": 5, "ip": "10.0.0.5", "target_service": "ssh"}
-        },
-        {
-            "event_id": "evt_00002",
+            "event_id": "evt_phys_00001",
             "source": "badge",
             "event_type": "badge_scan",
             "entity": {"id": "employee_42", "type": "employee"},
@@ -211,59 +247,25 @@ def _seed_initial_state():
             "severity": "medium",
             "flagged": True,
             "rule_triggered": "after_hours_badge_access",
-            "raw_details": {"door_id": "D-114", "access_granted": True, "department": "infrastructure"}
+            "raw_details": {"door_id": "D-114", "access_granted": True, "reader_type": "RFID_Mifare_900MHz", "department": "infrastructure"}
         },
         {
-            "event_id": "evt_00003",
+            "event_id": "evt_phys_00002",
             "source": "camera",
             "event_type": "motion_detected",
             "entity": {"id": "employee_42", "type": "employee"},
             "location": "server_room",
             "timestamp": "2026-09-26T02:15:30Z",
-            "severity": "medium",
-            "flagged": True,
-            "rule_triggered": "restricted_zone_motion",
-            "raw_details": {"camera_id": "CAM-09", "duration_seconds": 340, "bounding_confidence": 0.94}
-        },
-        {
-            "event_id": "evt_00004",
-            "source": "camera",
-            "event_type": "loitering_detected",
-            "entity": {"id": "unknown_actor", "type": "visitor"},
-            "location": "perimeter_gate_b",
-            "timestamp": "2026-09-26T02:18:10Z",
             "severity": "high",
             "flagged": True,
             "rule_triggered": "restricted_zone_motion",
-            "raw_details": {"camera_id": "CAM-02", "dwell_time_sec": 420, "yolo_class": "person"}
-        },
-        {
-            "event_id": "evt_00005",
-            "source": "network",
-            "event_type": "port_scan",
-            "entity": {"id": "unknown_actor", "type": "device"},
-            "location": "internal_lan",
-            "timestamp": "2026-09-26T02:20:00Z",
-            "severity": "high",
-            "flagged": True,
-            "rule_triggered": "port_scan",
-            "raw_details": {"scanned_ports": [22, 80, 443, 3389, 8080], "origin_ip": "192.168.1.189"}
-        },
-        {
-            "event_id": "evt_00006",
-            "source": "badge",
-            "event_type": "badge_scan",
-            "entity": {"id": "contractor_09", "type": "contractor"},
-            "location": "main_lobby",
-            "timestamp": "2026-09-26T02:22:00Z",
-            "severity": "low",
-            "flagged": False,
-            "rule_triggered": None,
-            "raw_details": {"door_id": "D-001", "access_granted": True}
+            "raw_details": {"camera_id": "CAM-09", "zone": "server_room_vault", "polygon": [160, 70, 320, 240], "confidence": 0.942, "duration_seconds": 340}
         }
     ]
 
-    for ev in initial_raw:
+    all_seed = nslkdd_events + physical_events
+
+    for ev in all_seed:
         _events.append(ev)
         _events_by_id[ev["event_id"]] = ev
 

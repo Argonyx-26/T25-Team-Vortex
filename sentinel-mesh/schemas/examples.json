@@ -1,19 +1,28 @@
 {
   "example_events": [
     {
-      "event_id": "evt_00001",
+      "event_id": "evt_nsl_00001",
       "source": "network",
       "event_type": "failed_login",
       "entity": { "id": "employee_42", "type": "employee" },
-      "location": null,
+      "location": "tcp_ssh",
       "timestamp": "2026-09-26T02:10:05Z",
-      "severity": "low",
+      "severity": "high",
       "flagged": true,
       "rule_triggered": "brute_force_login",
-      "raw_details": { "attempt_count": 3, "ip": "10.0.0.5" }
+      "raw_details": {
+        "protocol_type": "tcp",
+        "service": "ssh",
+        "flag": "REJ",
+        "src_bytes": 0,
+        "dst_bytes": 0,
+        "attempt_count": 4,
+        "ip": "10.0.0.5",
+        "dataset": "NSL-KDD KDDTest+"
+      }
     },
     {
-      "event_id": "evt_00002",
+      "event_id": "evt_nsl_00002",
       "source": "badge",
       "event_type": "badge_scan",
       "entity": { "id": "employee_42", "type": "employee" },
@@ -22,36 +31,67 @@
       "severity": "medium",
       "flagged": true,
       "rule_triggered": "after_hours_badge_access",
-      "raw_details": { "door_id": "D-114", "access_granted": true }
+      "raw_details": {
+        "door_id": "D-114",
+        "access_granted": true,
+        "reader_type": "RFID_Mifare_900MHz",
+        "badge_id": "HID-8849-042"
+      }
     },
     {
-      "event_id": "evt_00003",
+      "event_id": "evt_nsl_00003",
       "source": "camera",
       "event_type": "motion_detected",
       "entity": { "id": "employee_42", "type": "employee" },
       "location": "server_room",
       "timestamp": "2026-09-26T02:15:30Z",
-      "severity": "medium",
+      "severity": "high",
       "flagged": true,
       "rule_triggered": "restricted_zone_motion",
-      "raw_details": { "camera_id": "CAM-09", "duration_seconds": 340 }
+      "raw_details": {
+        "camera_id": "CAM-09",
+        "zone": "server_room_vault",
+        "polygon": [160, 70, 320, 240],
+        "duration_seconds": 340,
+        "confidence": 0.942
+      }
+    },
+    {
+      "event_id": "evt_nsl_00004",
+      "source": "network",
+      "event_type": "connection_rejected",
+      "entity": { "id": "employee_42", "type": "employee" },
+      "location": "tcp_private",
+      "timestamp": "2026-09-26T02:16:10Z",
+      "severity": "medium",
+      "flagged": true,
+      "rule_triggered": "port_scan",
+      "raw_details": {
+        "protocol_type": "tcp",
+        "service": "private",
+        "flag": "REJ",
+        "src_bytes": 0,
+        "dst_bytes": 0,
+        "count": 229,
+        "dataset": "NSL-KDD KDDTest+"
+      }
     }
   ],
   "example_incident": {
     "incident_id": "inc_00001",
     "created_at": "2026-09-26T02:15:31Z",
-    "updated_at": "2026-09-26T02:16:00Z",
-    "linked_event_ids": ["evt_00001", "evt_00002", "evt_00003"],
+    "updated_at": "2026-09-26T02:16:30Z",
+    "linked_event_ids": ["evt_nsl_00001", "evt_nsl_00002", "evt_nsl_00003", "evt_nsl_00004"],
     "primary_entity": { "id": "employee_42", "type": "employee" },
-    "locations": ["server_room"],
-    "time_window": { "start": "2026-09-26T02:10:05Z", "end": "2026-09-26T02:15:30Z" },
+    "locations": ["tcp_ssh", "server_room"],
+    "time_window": { "start": "2026-09-26T02:10:05Z", "end": "2026-09-26T02:16:10Z" },
     "correlation_reason": "same_entity_and_location",
-    "severity": "high",
-    "matched_attack_pattern": "recon_then_brute_force",
-    "predicted_next_step": "Likely attempt to access or copy data from a server within the next 10 minutes",
-    "confidence": 0.82,
-    "summary": "Employee_42's credentials were used for repeated failed network logins at 2:10 AM, followed four minutes later by an after-hours badge scan into the server room and sustained motion in a restricted camera zone. This sequence matches a known pre-exfiltration pattern.",
-    "recommended_action": "Verify employee_42's identity immediately and consider temporarily suspending server room access pending confirmation.",
+    "severity": "critical",
+    "matched_attack_pattern": "recon_then_physical_intrusion",
+    "predicted_next_step": "Likely attempt to exfiltrate database backup or deploy rogue hardware via server cabinet within 10 minutes",
+    "confidence": 0.94,
+    "summary": "Employee_42 credentials generated multiple failed TCP SSH connection rejections from IP 10.0.0.5 (verified in NSL-KDD packet capture dataset), followed by an off-hours badge transit at Server Room Door D-114 at 02:14 UTC, culminating in optical YOLOv8 surveillance breach inside vault polygon (160, 70, 320, 240) on CAM-09.",
+    "recommended_action": "Immediately revoke employee_42 badge credentials, engage electronic deadbolt on Door D-114, and isolate target IP 10.0.0.5.",
     "status": "new",
     "operator_feedback": null
   }

@@ -48,11 +48,15 @@ import CctvSensorView from './cctv/CctvSensorView';
 import PanelActionFatigue from './panels/PanelActionFatigue';
 import NotificationsDrawer from './triage/NotificationsDrawer';
 import LegalModals from './compliance/LegalModals';
+import ForensicIncidentReportModal from './reports/ForensicIncidentReportModal';
+import ForensicReportBox from './reports/ForensicReportBox';
 
 export default function LandingDashboard() {
   // Navigation & Modal State
   const [activeTab, setActiveTab] = useState('constellation');
   const [activeLegalModal, setActiveLegalModal] = useState(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [liveIntrusionAlert, setLiveIntrusionAlert] = useState(null);
   const [operatorLoad, setOperatorLoad] = useState('normal'); // 'normal' | 'high'
 
   // Live Backend Data States
@@ -223,6 +227,17 @@ export default function LandingDashboard() {
   const alertNotifCount = notifications.filter((n) => n.type === 'alert' && !n.handled).length;
   const activeIncident = incidents.find((i) => i.incident_id === selectedIncidentId) || incidents[0];
 
+  // Handle immediate CCTV zone intrusion alert
+  const handleCctvAlert = (alertEvent, alertNotif) => {
+    setLiveIntrusionAlert(alertNotif);
+    if (alertNotif) {
+      setNotifications((prev) => [alertNotif, ...prev.filter((n) => n.id !== alertNotif.id)]);
+    }
+    if (alertEvent) {
+      setEvents((prev) => [alertEvent, ...prev.filter((e) => e.event_id !== alertEvent.event_id)]);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#030611] text-slate-100 font-mono relative selection:bg-cyan-500/30 selection:text-cyan-200">
       {/* Precision Reticle Target Cursor & Click Spark Canvas */}
@@ -240,9 +255,47 @@ export default function LandingDashboard() {
         alertCount={alertNotifCount}
         flaggedCount={flaggedCount}
         onOpenLegalModal={setActiveLegalModal}
+        onOpenReport={() => setIsReportOpen(true)}
         onReset={handleReset}
         isResetting={isResetting}
       />
+
+      {/* DYNAMIC INTRUSION ALERT BANNER (Shows immediately when person enters restricted area!) */}
+      {liveIntrusionAlert && (
+        <div className="bg-rose-950/95 border-b-2 border-rose-500 px-4 lg:px-8 py-3 text-white flex flex-wrap items-center justify-between gap-3 shadow-[0_0_35px_rgba(244,63,94,0.5)] animate-pulse z-40 relative">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-300 animate-bounce flex-shrink-0" />
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-black text-xs sm:text-sm uppercase tracking-wider text-rose-200">
+                  {liveIntrusionAlert.title || 'CRITICAL INTRUSION ALERT'}
+                </span>
+                <span className="text-[10px] px-2 py-0.2 bg-rose-600 text-white font-bold uppercase">
+                  ZONE A BREACH
+                </span>
+              </div>
+              <div className="text-xs text-rose-100 mt-0.5 font-mono">{liveIntrusionAlert.message}</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsReportOpen(true)}
+              className="px-3 py-1.5 bg-white hover:bg-slate-100 text-rose-950 text-xs font-black tracking-wider uppercase cursor-pointer shadow-lg flex items-center gap-1.5"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>VIEW FORENSIC DOSSIER</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLiveIntrusionAlert(null)}
+              className="px-2 py-1 text-xs text-rose-300 hover:text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Command Center Content (Dense, High-Tech Layout with Zero Empty Voids) */}
       <main className="max-w-7xl mx-auto px-4 lg:px-8 py-6 space-y-8">
@@ -510,7 +563,10 @@ export default function LandingDashboard() {
           </div>
 
           {/* Physical CCTV Video Feed with Dynamic Zone Entry Alert */}
-          <CctvSensorView />
+          <CctvSensorView
+            onAlert={handleCctvAlert}
+            onOpenReport={() => setIsReportOpen(true)}
+          />
 
           {/* Operator Containment & Notification Triage */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
@@ -541,6 +597,24 @@ export default function LandingDashboard() {
             </div>
           </div>
         </section>
+        {/* ========================================================
+            MODULE 07: CLASSIFIED FORENSIC INCIDENT REPORT BOX
+            ======================================================== */}
+        <section id="section-report" className="space-y-4">
+          <div className="flex items-center justify-between border-b border-rose-900/60 pb-2">
+            <div className="flex items-center gap-2 text-xs text-rose-400 font-bold uppercase tracking-wider">
+              <FileText className="w-4 h-4 text-rose-400" />
+              <span>MODULE 07 // CLASSIFIED FORENSIC INCIDENT REPORT DOSSIER BOX</span>
+            </div>
+            <span className="text-[10px] text-rose-400/80 font-mono">COURT-ADMISSIBLE CHAIN OF CUSTODY</span>
+          </div>
+
+          <ForensicReportBox
+            incident={activeIncident}
+            events={events}
+            onExpandModal={() => setIsReportOpen(true)}
+          />
+        </section>
       </main>
 
       {/* Floating Telemetry Status (ScrollFloat) */}
@@ -550,6 +624,14 @@ export default function LandingDashboard() {
         flaggedCount={flaggedCount}
         incidentCount={incidents.length}
         socketConnected={socketConnected}
+      />
+
+      {/* Forensic Incident Report Modal (Connected to Screen) */}
+      <ForensicIncidentReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        incident={activeIncident}
+        events={events}
       />
 
       {/* Compliance Modals */}

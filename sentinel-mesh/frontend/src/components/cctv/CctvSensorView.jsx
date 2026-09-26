@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
-import { Eye, Video, ShieldAlert, CheckCircle, Crosshair, Play, Pause, RotateCcw, AlertTriangle, Layers, Lock, Cpu, Volume2, VolumeX, CheckCircle2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Eye, Video, ShieldAlert, CheckCircle, Crosshair, Play, Pause, RotateCcw, AlertTriangle, Layers, Lock, Cpu, Volume2, VolumeX, CheckCircle2, Zap, FileText } from 'lucide-react';
 import cctvTracksData from '../../data/cctv_tracks.json';
+import { API_BASE_URL } from '../../api';
 
 /**
  * getTrackingForTime
@@ -77,13 +78,18 @@ function getTrackingForTime(currentTime) {
   return null;
 }
 
-export default function CctvSensorView() {
+export default function CctvSensorView({
+  onAlert,
+  onOpenReport
+}) {
   const [selectedVideo, setSelectedVideo] = useState('/shoplifting_clip.mp4');
   const [isPlaying, setIsPlaying] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [showReticle, setShowReticle] = useState(true);
   const [isLockedDown, setIsLockedDown] = useState(false);
+  const [backendAlertStatus, setBackendAlertStatus] = useState(null);
   const videoRef = useRef(null);
+  const hasPostedAlertRef = useRef(false);
 
   // Exact YOLOv8 tracking state
   const currentTrack = getTrackingForTime(currentTime);
@@ -94,6 +100,63 @@ export default function CctvSensorView() {
   const dwellTime = isInRestrictedZone
     ? (currentTime >= 42.0 ? currentTime - 42.0 + 4.8 : Math.max(0, currentTime - 27.2)).toFixed(1)
     : '0.0';
+
+  // Automatically emit security alert immediately upon zone breach
+  useEffect(() => {
+    if (isInRestrictedZone && !hasPostedAlertRef.current) {
+      hasPostedAlertRef.current = true;
+      const alertPayload = {
+        event_id: `evt_cctv_${Date.now().toString().slice(-6)}`,
+        source: 'camera',
+        event_type: 'motion_detected',
+        entity: { id: 'employee_42', type: 'employee' },
+        location: 'server_room',
+        timestamp: new Date().toISOString(),
+        severity: 'high',
+        flagged: true,
+        rule_triggered: 'restricted_zone_motion',
+        raw_details: {
+          camera_id: 'CAM-09',
+          zone: 'server_room_vault',
+          polygon: [160, 70, 320, 240],
+          confidence: currentTrack?.conf || 94.2,
+          dwell_seconds: Number(dwellTime) || 1.2
+        }
+      };
+
+      const alertNotif = {
+        id: `notif_cctv_${Date.now().toString().slice(-5)}`,
+        type: 'alert',
+        title: '🚨 CRITICAL: CCTV Vault Zone Breach',
+        message: 'Intruder employee_42 breached restricted vault polygon on CAM-09.',
+        severity: 'critical',
+        handled: false,
+        created_at: new Date().toISOString()
+      };
+
+      // 1. Immediately post to parent frontend state (Zero delay!)
+      if (onAlert) {
+        onAlert(alertPayload, alertNotif);
+      }
+
+      setBackendAlertStatus(`Live Security Alert Emitted: ${alertPayload.event_id}`);
+
+      // 2. Also POST to backend pipeline
+      fetch(`${API_BASE_URL}/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(alertPayload)
+      }).catch((err) => console.warn('[CCTV Event POST notice]:', err.message));
+
+      fetch(`${API_BASE_URL}/notifications`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(alertNotif)
+      }).catch((err) => console.warn('[CCTV Notif POST notice]:', err.message));
+    } else if (!isInRestrictedZone) {
+      hasPostedAlertRef.current = false;
+    }
+  }, [isInRestrictedZone, currentTrack, dwellTime, onAlert]);
 
   const togglePlay = () => {
     if (!videoRef.current) return;
@@ -213,13 +276,30 @@ export default function CctvSensorView() {
                 <div className="text-[11px] sm:text-xs text-rose-200 mt-1 font-mono">
                   Target employee_42 breached restricted vault polygon (160, 70, 320, 240). Current dwell: <strong className="text-white bg-rose-900/80 px-1.5 py-0.5 border border-rose-400">{dwellTime}s</strong>.
                 </div>
+                {backendAlertStatus && (
+                  <div className="text-[10px] text-emerald-300 font-bold mt-1 flex items-center gap-1.5 bg-emerald-950/60 px-2 py-0.5 border border-emerald-700 w-fit">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                    <span>{backendAlertStatus}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-end sm:self-center">
+            <div className="flex flex-wrap items-center gap-2 self-end sm:self-center">
               <span className="text-[10px] px-2.5 py-1 bg-black/80 border border-rose-500 text-rose-300 font-bold tracking-wider">
-                YOLOv8 CONFIDENCE: {currentTrack?.conf ? `${currentTrack.conf}%` : '94.2%'}
+                YOLOv8: {currentTrack?.conf ? `${currentTrack.conf}%` : '94.2%'}
               </span>
+
+              {onOpenReport && (
+                <button
+                  type="button"
+                  onClick={onOpenReport}
+                  className="text-xs px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white font-black tracking-wider uppercase border border-white/60 shadow-[0_0_15px_rgba(255,255,255,0.4)] cursor-pointer flex items-center gap-1.5 transition-all"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>VIEW INCIDENT DOSSIER</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -5,6 +5,7 @@ import { Shield, Sparkles, Eye, FileSpreadsheet, Terminal, Bell, Lock, FileText,
  * CardNav
  * High-tech modular card navigation bar for all 6 SentinelMesh modules.
  * Clean, distinct module topics with zero overlap and high information density.
+ * Includes dedicated [ FORENSIC REPORT ] button.
  */
 export default function CardNav({
   activeTab,
@@ -16,6 +17,7 @@ export default function CardNav({
   alertCount,
   flaggedCount = 0,
   onOpenLegalModal,
+  onOpenReport,
   onReset,
   isResetting
 }) {
@@ -25,7 +27,8 @@ export default function CardNav({
     { id: 'signals', label: '03 / FLAGGED', icon: Radio, badge: flaggedCount != null ? flaggedCount : null, alert: (flaggedCount || 0) > 0 },
     { id: 'fusion', label: '04 / FUSION ENGINE', icon: GitMerge, badge: 'CORRELATE' },
     { id: 'digital-csv', label: '05 / DIGITAL CSV', icon: FileSpreadsheet, badge: 'NSL-KDD' },
-    { id: 'cctv', label: '06 / PHYSICAL CCTV', icon: Eye, badge: 'ALERT' },
+    { id: 'cctv', label: '06 / PHYSICAL CCTV', icon: Eye, badge: 'ALERT', alert: true },
+    { id: 'report', label: '07 / REPORT BOX', icon: FileText, badge: 'DOSSIER', alert: true },
   ];
 
   const handleCardClick = (id) => {
@@ -109,9 +112,22 @@ export default function CardNav({
 
         {/* Action Controls & Legal Modals */}
         <div className="flex items-center gap-2 justify-end">
+          {/* Forensic Incident Report Button */}
+          {onOpenReport && (
+            <button
+              type="button"
+              onClick={onOpenReport}
+              className="flex items-center gap-1.5 px-3 py-1 bg-rose-950/80 hover:bg-rose-900 border border-rose-500 text-rose-200 text-xs font-bold transition-all cursor-pointer shadow-[0_0_15px_rgba(244,63,94,0.35)] animate-pulse"
+              title="Open Classified Forensic Incident Report Box"
+            >
+              <FileText className="w-3.5 h-3.5 text-rose-400" />
+              <span>SHOW REPORT BOX</span>
+            </button>
+          )}
+
           <button
             type="button"
-            onClick={() => onOpenLegalModal('terms')}
+            onClick={() => onOpenLegalModal && onOpenLegalModal('terms')}
             className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-slate-400 hover:text-slate-200 border border-slate-800 bg-[#070b14] text-[11px] cursor-pointer"
             title="Terms and Conditions"
           >
@@ -121,7 +137,7 @@ export default function CardNav({
 
           <button
             type="button"
-            onClick={() => onOpenLegalModal('privacy')}
+            onClick={() => onOpenLegalModal && onOpenLegalModal('privacy')}
             className="hidden sm:flex items-center gap-1 px-2.5 py-1 text-slate-400 hover:text-slate-200 border border-slate-800 bg-[#070b14] text-[11px] cursor-pointer"
             title="Privacy Policy"
           >
